@@ -1,4 +1,4 @@
-package com.demp.config
+package com.demo.config
 
 import com.mongodb.client.MongoClient
 import com.thoughtworks.xstream.XStream
@@ -22,7 +22,7 @@ private const val AXON_SAGAS = "axon_sagas"
 private const val AXON_TOKENS = "axon_tokens"
 
 @Configuration
-class MongoAutoConfig {
+class MongoConfig {
 
     private val logger: Logger = LoggerFactory.getLogger(MongoAutoConfig::class.java)
 
