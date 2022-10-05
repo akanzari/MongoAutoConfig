@@ -1,7 +1,6 @@
-package com.demo.config
+package com.zp.digital.edgebb.config
 
 import com.mongodb.client.MongoClient
-import com.thoughtworks.xstream.XStream
 import org.axonframework.config.Configurer
 import org.axonframework.eventhandling.tokenstore.TokenStore
 import org.axonframework.eventsourcing.eventstore.EventStorageEngine
@@ -18,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+
 private const val AXON_SAGAS = "axon_sagas"
 private const val AXON_TOKENS = "axon_tokens"
 
@@ -26,13 +26,15 @@ class MongoConfig {
 
     private val logger: Logger = LoggerFactory.getLogger(MongoAutoConfig::class.java)
 
-    @Bean
-    fun storageEngine(mongoClient: MongoClient): EventStorageEngine {
-        return MongoEventStorageEngine.builder()
-            .mongoTemplate(DefaultMongoTemplate.builder().mongoDatabase(mongoClient).build())
-            .build()
-    }
+    /**
+     * Create a Mongo based Event Storage Engine.
+     */
+    fun storageEngine(mongoTemplate: MongoTemplate): EventStorageEngine = MongoEventStorageEngine.builder()
+        .mongoTemplate(mongoTemplate).build()
 
+    /**
+     * Uses the Configurer to wire everything together including Mongo as the Event and Token Store.
+     */
     @Autowired
     fun configuration(configurer: Configurer, mongoClient: MongoClient, serializer: Serializer) {
         val mongoTemplate = DefaultMongoTemplate.builder()
@@ -42,13 +44,16 @@ class MongoConfig {
             .build()
 
         configurer
-            .eventProcessing { eventProcessingConfigurer ->
-                eventProcessingConfigurer
-                    .registerSagaStore { conf -> mongoSagaStore(mongoTemplate, conf.serializer()) }
-                    .registerTokenStore { conf -> mongoTokenStore(mongoTemplate, conf.serializer()) }
+            .configureEmbeddedEventStore { storageEngine(mongoTemplate) }
+            .eventProcessing { conf -> conf
+                .registerSagaStore { mongoSagaStore(mongoTemplate, it.serializer()) }
+                .registerTokenStore { mongoTokenStore(mongoTemplate, it.serializer()) }
             }
     }
 
+    /**
+     * Create a Mongo based Token Store.
+     */
     fun mongoTokenStore(mongoTemplate: MongoTemplate, serializer: Serializer): TokenStore {
         logger.info("Creating mongodb token store")
         return MongoTokenStore.builder()
@@ -57,6 +62,9 @@ class MongoConfig {
             .build()
     }
 
+    /**
+     * Create a Mongo based Saga Store.
+     */
     fun mongoSagaStore(mongoTemplate: MongoTemplate, serializer: Serializer): SagaStore<Any> {
         logger.info("Creating mongodb saga store")
         return MongoSagaStore.builder()
