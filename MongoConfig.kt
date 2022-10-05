@@ -24,7 +24,7 @@ private const val AXON_TOKENS = "axon_tokens"
 @Configuration
 class MongoConfig {
 
-    private val logger: Logger = LoggerFactory.getLogger(MongoAutoConfig::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(MongoConfig::class.java)
 
     /**
      * Create a Mongo based Event Storage Engine.
