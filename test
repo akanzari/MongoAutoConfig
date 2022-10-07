@@ -1,0 +1,42 @@
+final ConfirmPayerRq confirmPayerRq = hpsMapper.confirmPayerRequestedEventToConfirmPayerRq(evt);
+ConfirmPayer10 confirmPayer10 = new ConfirmPayer10();
+confirmPayer10.setArg0(confirmPayerRq);
+final JAXBElement<ConfirmPayer10> jAXBElement = new com.zp.digital.edgebb.wsdl.payer.ObjectFactory().createConfirmPayer10(confirmPayer10);
+JAXBElement<ConfirmPayer10Response> response = (JAXBElement<ConfirmPayer10Response>) payerConnector.callWebService(payerConnector.getDefaultUri(), jAXBElement);
+       
+
+
+public class SoapConnector extends WebServiceGatewaySupport {
+
+    public Object callWebService(String url, Object request){
+        this.setInterceptors(new ClientInterceptor[] { new SoapClientInterceptor() });
+        return getWebServiceTemplate().marshalSendAndReceive(url, request, new WebServiceMessageCallback() {
+
+            public void doWithMessage(WebServiceMessage message) {
+                try {
+                    SaajSoapMessage soapMessage = (SaajSoapMessage) message;
+                    MimeHeaders headers = soapMessage.getSaajMessage().getMimeHeaders();
+                    headers.addHeader(TransportConstants.HEADER_CONTENT_TYPE, "text/xml;charset=utf-8");
+                } catch (Exception e) {
+                    // exception handling
+                }
+            }
+        });
+    }
+}
+
+@Bean
+public Jaxb2Marshaller marshallerPayer() {
+   Jaxb2Marshaller marshaller = new Jaxb2Marshaller();
+   marshaller.setContextPath(PACKAGE + "payer");
+   return marshaller;
+}
+
+@Bean
+public SoapConnector payerConnector(Jaxb2Marshaller marshallerPayer) {
+    SoapConnector client = new SoapConnector();
+    client.setDefaultUri(applicationProperties.getUrls().getConfirmPayer());
+    client.setMarshaller(marshallerPayer);
+    client.setUnmarshaller(marshallerPayer);
+    return client;
+}
